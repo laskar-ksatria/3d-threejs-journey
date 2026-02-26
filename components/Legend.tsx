@@ -131,6 +131,8 @@ export function Legend() {
             <span style={{ opacity: 0.85 }}>Right</span>
             <Key>Space</Key>
             <span style={{ opacity: 0.85 }}>Jump</span>
+            <Key>Enter</Key>
+            <span style={{ opacity: 0.85 }}>Emote</span>
           </div>
 
           <div

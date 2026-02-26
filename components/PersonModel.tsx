@@ -5,13 +5,21 @@ import { useEffect, useRef, useMemo, useImperativeHandle, forwardRef } from 'rea
 import { useGLTF, useAnimations } from '@react-three/drei'
 import { SkeletonUtils } from 'three-stdlib'
 
+export type AnimState = 'idle' | 'walk' | 'emote'
+
 interface PersonModelProps {
-  isWalking: boolean
+  animState: AnimState
   scale?: number
 }
 
+const ANIM_MAP: Record<AnimState, string> = {
+  idle: 'wait',
+  walk: 'walk',
+  emote: 'coucou',
+}
+
 export const PersonModel = forwardRef<THREE.Group, PersonModelProps>(
-  ({ isWalking, scale = 1, ...props }, ref) => {
+  ({ animState, scale = 1, ...props }, ref) => {
     const group = useRef<THREE.Group>(null!)
     const { scene, animations } = useGLTF('/models/person.glb')
     const clone = useMemo(() => SkeletonUtils.clone(scene), [scene])
@@ -29,8 +37,8 @@ export const PersonModel = forwardRef<THREE.Group, PersonModelProps>(
     }, [clone])
 
     useEffect(() => {
-      const targetName = isWalking ? 'walk' : 'wait'
-      const target = actions[targetName]
+      const clipName = ANIM_MAP[animState]
+      const target = actions[clipName]
 
       Object.values(actions).forEach((action) => {
         if (action && action !== target) {
@@ -38,8 +46,13 @@ export const PersonModel = forwardRef<THREE.Group, PersonModelProps>(
         }
       })
 
-      target?.reset().fadeIn(0.3).play()
-    }, [isWalking, actions])
+      if (animState === 'emote') {
+        target?.reset().fadeIn(0.2).setLoop(THREE.LoopOnce, 1).play()
+        if (target) target.clampWhenFinished = true
+      } else {
+        target?.reset().fadeIn(0.3).setLoop(THREE.LoopRepeat, Infinity).play()
+      }
+    }, [animState, actions])
 
     return (
       <group ref={group} scale={scale} {...props} dispose={null}>

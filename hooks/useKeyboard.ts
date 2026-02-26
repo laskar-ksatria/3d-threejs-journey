@@ -8,6 +8,7 @@ export interface KeyState {
   left: boolean
   right: boolean
   jump: boolean
+  emote: boolean
 }
 
 export function useKeyboard() {
@@ -17,6 +18,7 @@ export function useKeyboard() {
     left: false,
     right: false,
     jump: false,
+    emote: false,
   })
 
   useEffect(() => {
@@ -42,6 +44,9 @@ export function useKeyboard() {
           keys.current.jump = true
           e.preventDefault()
           break
+        case 'Enter':
+          keys.current.emote = true
+          break
       }
     }
 
@@ -65,6 +70,9 @@ export function useKeyboard() {
           break
         case 'Space':
           keys.current.jump = false
+          break
+        case 'Enter':
+          keys.current.emote = false
           break
       }
     }

@@ -4,6 +4,7 @@ import * as THREE from 'three'
 import { useRef, useState, useImperativeHandle, forwardRef } from 'react'
 import { useFrame } from '@react-three/fiber'
 import { PersonModel } from './PersonModel'
+import type { AnimState } from './PersonModel'
 import type { KeyState } from '@/hooks/useKeyboard'
 
 const MOVE_SPEED = 4
@@ -11,6 +12,7 @@ const JUMP_FORCE = 6
 const GRAVITY = -15
 const ROTATION_SPEED = 10
 const MAP_BOUND = 24
+const EMOTE_DURATION = 2.2
 
 interface CharacterProps {
   keys: React.RefObject<KeyState>
@@ -22,8 +24,10 @@ export const Character = forwardRef<THREE.Group, CharacterProps>(
     const velocityY = useRef(0)
     const isGrounded = useRef(true)
     const targetRotation = useRef(0)
-    const [isWalking, setIsWalking] = useState(false)
-    const wasWalking = useRef(false)
+    const [animState, setAnimState] = useState<AnimState>('idle')
+    const prevAnim = useRef<AnimState>('idle')
+    const emoteTimer = useRef(0)
+    const emoteCooldown = useRef(false)
 
     useImperativeHandle(ref, () => groupRef.current)
 
@@ -31,7 +35,40 @@ export const Character = forwardRef<THREE.Group, CharacterProps>(
       if (!groupRef.current || !keys.current) return
 
       const dt = Math.min(delta, 0.1)
-      const { forward, backward, left, right, jump } = keys.current
+      const { forward, backward, left, right, jump, emote } = keys.current
+
+      // Emote handling
+      if (emoteTimer.current > 0) {
+        emoteTimer.current -= dt
+        if (emoteTimer.current <= 0) {
+          emoteTimer.current = 0
+          emoteCooldown.current = false
+        }
+
+        // Still allow gravity during emote
+        velocityY.current += GRAVITY * dt
+        groupRef.current.position.y += velocityY.current * dt
+        if (groupRef.current.position.y <= 0) {
+          groupRef.current.position.y = 0
+          velocityY.current = 0
+          isGrounded.current = true
+        }
+
+        const newAnim: AnimState = emoteTimer.current > 0 ? 'emote' : 'idle'
+        if (newAnim !== prevAnim.current) {
+          prevAnim.current = newAnim
+          setAnimState(newAnim)
+        }
+        return
+      }
+
+      if (emote && !emoteCooldown.current && isGrounded.current) {
+        emoteTimer.current = EMOTE_DURATION
+        emoteCooldown.current = true
+        prevAnim.current = 'emote'
+        setAnimState('emote')
+        return
+      }
 
       let moveX = 0
       let moveZ = 0
@@ -47,9 +84,10 @@ export const Character = forwardRef<THREE.Group, CharacterProps>(
       }
 
       const moving = length > 0
-      if (moving !== wasWalking.current) {
-        wasWalking.current = moving
-        setIsWalking(moving)
+      const newAnim: AnimState = moving ? 'walk' : 'idle'
+      if (newAnim !== prevAnim.current) {
+        prevAnim.current = newAnim
+        setAnimState(newAnim)
       }
 
       groupRef.current.position.x += moveX * MOVE_SPEED * dt
@@ -59,8 +97,7 @@ export const Character = forwardRef<THREE.Group, CharacterProps>(
         targetRotation.current = Math.atan2(moveX, moveZ)
       }
 
-      let currentRot = groupRef.current.rotation.y
-      let diff = targetRotation.current - currentRot
+      let diff = targetRotation.current - groupRef.current.rotation.y
       diff = ((diff + Math.PI) % (Math.PI * 2)) - Math.PI
       if (diff < -Math.PI) diff += Math.PI * 2
       groupRef.current.rotation.y += diff * Math.min(1, ROTATION_SPEED * dt)
@@ -93,7 +130,7 @@ export const Character = forwardRef<THREE.Group, CharacterProps>(
 
     return (
       <group ref={groupRef}>
-        <PersonModel isWalking={isWalking} scale={1} />
+        <PersonModel animState={animState} scale={1} />
       </group>
     )
   }
