@@ -102,11 +102,39 @@ export function NPC({ startPosition, npcScale = 0.45, seed = 0 }: NPCProps) {
 }
 
 const NPC_SPAWNS: { pos: [number, number, number]; scale: number }[] = [
-  { pos: [8, 0, 5], scale: 0.3 },
-  { pos: [-10, 0, -7], scale: 0.55 },
-  { pos: [-6, 0, 12], scale: 0.25 },
-  { pos: [14, 0, -15], scale: 0.45 },
-  { pos: [-15, 0, -3], scale: 0.6 },
+  // Cluster sekitar jalan tengah
+  { pos: [3, 0, 4], scale: 0.35 },
+  { pos: [-2, 0, -3], scale: 0.5 },
+  { pos: [5, 0, -2], scale: 0.28 },
+
+  // Area timur laut
+  { pos: [15, 0, -12], scale: 0.45 },
+  { pos: [18, 0, -8], scale: 0.3 },
+  { pos: [12, 0, -18], scale: 0.55 },
+
+  // Area barat laut
+  { pos: [-14, 0, -14], scale: 0.4 },
+  { pos: [-18, 0, -10], scale: 0.25 },
+  { pos: [-11, 0, -19], scale: 0.6 },
+
+  // Area barat daya
+  { pos: [-16, 0, 8], scale: 0.38 },
+  { pos: [-12, 0, 15], scale: 0.5 },
+  { pos: [-20, 0, 12], scale: 0.32 },
+
+  // Area tenggara
+  { pos: [16, 0, 10], scale: 0.42 },
+  { pos: [12, 0, 18], scale: 0.55 },
+
+  // Dekat pond
+  { pos: [6, 0, -7], scale: 0.22 },
+  { pos: [13, 0, -5], scale: 0.48 },
+
+  // Tersebar random
+  { pos: [-7, 0, 5], scale: 0.33 },
+  { pos: [0, 0, 12], scale: 0.27 },
+  { pos: [-5, 0, -10], scale: 0.52 },
+  { pos: [20, 0, 0], scale: 0.36 },
 ]
 
 export function NPCGroup() {

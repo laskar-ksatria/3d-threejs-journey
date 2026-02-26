@@ -15,6 +15,13 @@ const ROTATION_SPEED = 10
 const MAP_BOUND = 24
 const EMOTE_DURATION = 2.2
 
+const RUN_LEAN = 0.35
+const RUN_BOUNCE_AMP = 0.06
+const RUN_BOUNCE_FREQ = 14
+const WALK_BOUNCE_AMP = 0.02
+const WALK_BOUNCE_FREQ = 8
+const POSTURE_LERP = 8
+
 interface CharacterProps {
   keys: React.RefObject<KeyState>
 }
@@ -22,6 +29,7 @@ interface CharacterProps {
 export const Character = forwardRef<THREE.Group, CharacterProps>(
   ({ keys }, ref) => {
     const groupRef = useRef<THREE.Group>(null!)
+    const bodyRef = useRef<THREE.Group>(null!)
     const velocityY = useRef(0)
     const isGrounded = useRef(true)
     const targetRotation = useRef(0)
@@ -30,15 +38,18 @@ export const Character = forwardRef<THREE.Group, CharacterProps>(
     const emoteTimer = useRef(0)
     const emoteCooldown = useRef(false)
 
+    const currentLean = useRef(0)
+    const currentBounce = useRef(0)
+    const runTime = useRef(0)
+
     useImperativeHandle(ref, () => groupRef.current)
 
-    useFrame((_, delta) => {
+    useFrame((state, delta) => {
       if (!groupRef.current || !keys.current) return
 
       const dt = Math.min(delta, 0.1)
       const { forward, backward, left, right, jump, emote, sprint } = keys.current
 
-      // Emote handling
       if (emoteTimer.current > 0) {
         emoteTimer.current -= dt
         if (emoteTimer.current <= 0) {
@@ -46,7 +57,6 @@ export const Character = forwardRef<THREE.Group, CharacterProps>(
           emoteCooldown.current = false
         }
 
-        // Still allow gravity during emote
         velocityY.current += GRAVITY * dt
         groupRef.current.position.y += velocityY.current * dt
         if (groupRef.current.position.y <= 0) {
@@ -59,6 +69,13 @@ export const Character = forwardRef<THREE.Group, CharacterProps>(
         if (newAnim !== prevAnim.current) {
           prevAnim.current = newAnim
           setAnimState(newAnim)
+        }
+
+        if (bodyRef.current) {
+          currentLean.current += (0 - currentLean.current) * Math.min(1, POSTURE_LERP * dt)
+          currentBounce.current += (0 - currentBounce.current) * Math.min(1, POSTURE_LERP * dt)
+          bodyRef.current.rotation.x = currentLean.current
+          bodyRef.current.position.y = currentBounce.current
         }
         return
       }
@@ -85,8 +102,9 @@ export const Character = forwardRef<THREE.Group, CharacterProps>(
       }
 
       const moving = length > 0
-      const speed = sprint && moving ? RUN_SPEED : WALK_SPEED
-      const newAnim: AnimState = moving ? (sprint ? 'run' : 'walk') : 'idle'
+      const running = sprint && moving
+      const speed = running ? RUN_SPEED : WALK_SPEED
+      const newAnim: AnimState = moving ? (running ? 'run' : 'walk') : 'idle'
       if (newAnim !== prevAnim.current) {
         prevAnim.current = newAnim
         setAnimState(newAnim)
@@ -97,6 +115,7 @@ export const Character = forwardRef<THREE.Group, CharacterProps>(
 
       if (moving) {
         targetRotation.current = Math.atan2(moveX, moveZ)
+        runTime.current += dt
       }
 
       let diff = targetRotation.current - groupRef.current.rotation.y
@@ -128,11 +147,34 @@ export const Character = forwardRef<THREE.Group, CharacterProps>(
         -MAP_BOUND,
         MAP_BOUND
       )
+
+      // Running posture
+      if (bodyRef.current) {
+        let targetLean = 0
+        let targetBounce = 0
+
+        if (running && isGrounded.current) {
+          targetLean = RUN_LEAN
+          targetBounce = Math.abs(Math.sin(runTime.current * RUN_BOUNCE_FREQ)) * RUN_BOUNCE_AMP
+        } else if (moving && isGrounded.current) {
+          targetLean = 0.05
+          targetBounce = Math.abs(Math.sin(runTime.current * WALK_BOUNCE_FREQ)) * WALK_BOUNCE_AMP
+        }
+
+        const t = Math.min(1, POSTURE_LERP * dt)
+        currentLean.current += (targetLean - currentLean.current) * t
+        currentBounce.current += (targetBounce - currentBounce.current) * t
+
+        bodyRef.current.rotation.x = currentLean.current
+        bodyRef.current.position.y = currentBounce.current
+      }
     })
 
     return (
       <group ref={groupRef}>
-        <PersonModel animState={animState} scale={1} />
+        <group ref={bodyRef}>
+          <PersonModel animState={animState} scale={1} />
+        </group>
       </group>
     )
   }
