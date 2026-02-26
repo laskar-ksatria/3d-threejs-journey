@@ -129,6 +129,8 @@ export function Legend() {
             <span style={{ opacity: 0.85 }}>Left</span>
             <Key>D</Key>
             <span style={{ opacity: 0.85 }}>Right</span>
+            <Key>Shift</Key>
+            <span style={{ opacity: 0.85 }}>Sprint (hold)</span>
             <Key>Space</Key>
             <span style={{ opacity: 0.85 }}>Jump</span>
             <Key>Enter</Key>
@@ -145,7 +147,7 @@ export function Legend() {
               lineHeight: '1.5',
             }}
           >
-            W+A / W+D for diagonal movement
+            Shift + WASD to run &middot; W+A / W+D for diagonal
           </div>
         </div>
       ) : (

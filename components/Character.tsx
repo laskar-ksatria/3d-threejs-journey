@@ -7,7 +7,8 @@ import { PersonModel } from './PersonModel'
 import type { AnimState } from './PersonModel'
 import type { KeyState } from '@/hooks/useKeyboard'
 
-const MOVE_SPEED = 4
+const WALK_SPEED = 4
+const RUN_SPEED = 8
 const JUMP_FORCE = 6
 const GRAVITY = -15
 const ROTATION_SPEED = 10
@@ -35,7 +36,7 @@ export const Character = forwardRef<THREE.Group, CharacterProps>(
       if (!groupRef.current || !keys.current) return
 
       const dt = Math.min(delta, 0.1)
-      const { forward, backward, left, right, jump, emote } = keys.current
+      const { forward, backward, left, right, jump, emote, sprint } = keys.current
 
       // Emote handling
       if (emoteTimer.current > 0) {
@@ -84,14 +85,15 @@ export const Character = forwardRef<THREE.Group, CharacterProps>(
       }
 
       const moving = length > 0
-      const newAnim: AnimState = moving ? 'walk' : 'idle'
+      const speed = sprint && moving ? RUN_SPEED : WALK_SPEED
+      const newAnim: AnimState = moving ? (sprint ? 'run' : 'walk') : 'idle'
       if (newAnim !== prevAnim.current) {
         prevAnim.current = newAnim
         setAnimState(newAnim)
       }
 
-      groupRef.current.position.x += moveX * MOVE_SPEED * dt
-      groupRef.current.position.z += moveZ * MOVE_SPEED * dt
+      groupRef.current.position.x += moveX * speed * dt
+      groupRef.current.position.z += moveZ * speed * dt
 
       if (moving) {
         targetRotation.current = Math.atan2(moveX, moveZ)

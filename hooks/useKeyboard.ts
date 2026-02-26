@@ -9,6 +9,7 @@ export interface KeyState {
   right: boolean
   jump: boolean
   emote: boolean
+  sprint: boolean
 }
 
 export function useKeyboard() {
@@ -19,6 +20,7 @@ export function useKeyboard() {
     right: false,
     jump: false,
     emote: false,
+    sprint: false,
   })
 
   useEffect(() => {
@@ -47,6 +49,10 @@ export function useKeyboard() {
         case 'Enter':
           keys.current.emote = true
           break
+        case 'ShiftLeft':
+        case 'ShiftRight':
+          keys.current.sprint = true
+          break
       }
     }
 
@@ -73,6 +79,10 @@ export function useKeyboard() {
           break
         case 'Enter':
           keys.current.emote = false
+          break
+        case 'ShiftLeft':
+        case 'ShiftRight':
+          keys.current.sprint = false
           break
       }
     }
